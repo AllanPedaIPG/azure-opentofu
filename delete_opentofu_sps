@@ -1,7 +1,15 @@
 #!/bin/bash
 
+DISPLAYNAME='opentofu'
 # delete all serviceprincipals with name like *opentofu*
-for id in $(az ad sp list --query "[].{displayName:displayName,appId:appId,id:id} | [? contains(displayName,'opentofu')][id]" --all -o tsv)
+for id in $(az ad sp list --query "[].{displayName:displayName,appId:appId,id:id} | [? contains(displayName,'$DISPLAYNAME')][id]" --all -o tsv)
 do
+   echo az ad sp delete --id "$id"
    az ad sp delete --id "$id"
+done
+
+for id in $(az ad app list --query "[].{displayName:displayName,appId:appId,id:id} | [? contains(displayName,'$DISPLAYNAME')][id]" --all -o tsv)
+do
+   echo az ad app delete --id "$id"
+   az ad app delete --id "$id"
 done
