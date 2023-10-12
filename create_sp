@@ -16,7 +16,7 @@ resourceGroup="app_sndbx"
 
 echo "Creating SP for RBAC with name $servicePrincipalName, with role $roleName and in scopes /subscriptions/$subscriptionID/resourceGroups/$resourceGroup"
 az ad sp create-for-rbac --name $servicePrincipalName \
-                         --role "Owner" \
+                         --role "Contributor" \
                          --scopes "/subscriptions/$subscriptionID/resourceGroups/$resourceGroup" > "$svcplan"
 
 ARM_CLIENT_ID="$(jp --unquoted 'appId'  < $svcplan)"
@@ -24,7 +24,7 @@ ARM_CLIENT_ID="$(jp --unquoted 'appId'  < $svcplan)"
 # needed in order to run "tofu plan"
 az role assignment create --assignee "$ARM_CLIENT_ID" --role "Reader"
 # needed in order to run "tofu apply"
-az role assignment create --assignee "$ARM_CLIENT_ID" --role "Owner"
+az role assignment create --assignee "$ARM_CLIENT_ID" --role "Contributor"
 
 echo ARM_SUBSCRIPTION_ID="\"$subscriptionID\""
 echo ARM_TENANT_ID="\"$(jp --unquoted 'tenant' < $svcplan)\""
