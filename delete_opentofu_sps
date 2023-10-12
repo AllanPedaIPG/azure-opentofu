@@ -8,6 +8,7 @@ do
    az ad sp delete --id "$id"
 done
 
+# delete all apps with name like *opentofu*
 for id in $(az ad app list --query "[].{displayName:displayName,appId:appId,id:id} | [? contains(displayName,'$DISPLAYNAME')][id]" --all -o tsv)
 do
    echo az ad app delete --id "$id"
