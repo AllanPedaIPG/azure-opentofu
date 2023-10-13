@@ -42,10 +42,11 @@ az ad sp create-for-rbac --name $servicePrincipalName \
 
 ARM_CLIENT_ID="$(jp --unquoted 'appId'  < $svcplan)"
 
-# needed in order to run "tofu plan"
-az role assignment create --assignee "$ARM_CLIENT_ID" --role "Reader" > /dev/null
-# needed in order to run "tofu apply"
-az role assignment create --assignee "$ARM_CLIENT_ID" --role "Contributor" > /dev/null
+# not sure why I had to do assign roles explicitly
+for r in "${SPROLES[@]}"
+do
+   az role assignment create --assignee "$ARM_CLIENT_ID" --role "$r" > /dev/null
+done
 
 echo ARM_SUBSCRIPTION_ID="\"$subscriptionID\""
 echo ARM_TENANT_ID="\"$(jp --unquoted 'tenant' < $svcplan)\""
