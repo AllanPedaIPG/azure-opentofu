@@ -33,6 +33,10 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name = "sndbx_rg"
+  name = "opentofu_chapter01_rg"
   location = "eastus"
+  tags = {
+    creator = "allan.peda@interpublic.com"
+    owner = "mark.clements@interpublic.com"
+  }
 }
