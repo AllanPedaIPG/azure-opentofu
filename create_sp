@@ -1,5 +1,19 @@
 #!/bin/sh
 
+# Creates Service Principal delegate to run OpenTofu
+# provisioning
+# October 13, 2023
+# Allan Peda <allan.peda@interpublic.com>
+
+set -eEuo pipefail
+## Constants
+################################
+declare COMMON_PREFIX='opentofu'
+readonly COMMON_PREFIX
+# Reader is a needed permission for creating the plan
+# Contributor is a needed permission for applying the plan
+declare -a SPROLES=('Contributor' 'Reader')
+
 declare svcplan="$(mktemp)"
 trap "rm -f $svcplan" EXIT
 
@@ -8,23 +22,30 @@ export MSYS_NO_PATHCONV=1
 # From
 # https://learn.microsoft.com/en-us/cli/azure/azure-cli-sp-tutorial-1?tabs=bash
 let "randomIdentifier=$RANDOM*$RANDOM"
-servicePrincipalName="opentofu-$randomIdentifier"
+servicePrincipalName="${COMMON_PREFIX}-$randomIdentifier"
 subscriptionID=$(az account show --query id --output tsv)
 # Verify the ID of the active subscription
-echo "Using subscription ID $subscriptionID"
-resourceGroup="app_sndbx"
+echo "Using subscription ID: $subscriptionID"
+resourceGroup="${COMMON_PREFIX}-rg"
+if [[ $(az group exists --name "$resourceGroup") == true ]]
+then
+   echo "Using Resource Group:  $resourceGroup"
+else
+   echo "Please create Resource Group:  $resourceGroup"
+   exit 1
+fi
 
-echo "Creating SP for RBAC with name $servicePrincipalName, with role $roleName and in scopes /subscriptions/$subscriptionID/resourceGroups/$resourceGroup"
+echo "Creating SP for RBAC with name $servicePrincipalName, with role "${SPROLES[0]}" and in scopes /subscriptions/$subscriptionID/resourceGroups/$resourceGroup"
 az ad sp create-for-rbac --name $servicePrincipalName \
-                         --role "Contributor" \
+                         --role "${SPROLES[0]}" \
                          --scopes "/subscriptions/$subscriptionID/resourceGroups/$resourceGroup" > "$svcplan"
 
 ARM_CLIENT_ID="$(jp --unquoted 'appId'  < $svcplan)"
 
 # needed in order to run "tofu plan"
-az role assignment create --assignee "$ARM_CLIENT_ID" --role "Reader"
+az role assignment create --assignee "$ARM_CLIENT_ID" --role "Reader" > /dev/null
 # needed in order to run "tofu apply"
-az role assignment create --assignee "$ARM_CLIENT_ID" --role "Contributor"
+az role assignment create --assignee "$ARM_CLIENT_ID" --role "Contributor" > /dev/null
 
 echo ARM_SUBSCRIPTION_ID="\"$subscriptionID\""
 echo ARM_TENANT_ID="\"$(jp --unquoted 'tenant' < $svcplan)\""
