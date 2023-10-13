@@ -33,7 +33,8 @@ else
    exit 1
 fi
 
-echo "Creating SP for RBAC with name $servicePrincipalName, with role ${SPROLES[0]} and in scopes /subscriptions/$subscriptionID/resourceGroups/$resourceGroup"
+echo -n "Creating SP for RBAC with name $servicePrincipalName, " >&2
+echo "with role ${SPROLES[0]} and in scopes /subscriptions/$subscriptionID/resourceGroups/$resourceGroup" >&2
 az ad sp create-for-rbac --name $servicePrincipalName \
                          --role "${SPROLES[0]}" \
                          --scopes "/subscriptions/$subscriptionID/resourceGroups/$resourceGroup" > "$svcplan"
